@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اسپورت تایم - جزئیات سالن و رزرو</title>
+    
+    <!-- Vazirmatn Font -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
+                            950: '#020617',
+                        },
+                        neon: {
+                            green: '#39FF14',
+                            blue: '#0FF0FC'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Vazirmatn', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { 
+            font-family: 'Vazirmatn', sans-serif; 
+            background-color: #0f172a; 
+            color: #ffffff;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #0FF0FC; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Canvas Background */
+        #particles-bg { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            z-index: -1; 
+            pointer-events: none;
+        }
+
+        /* Glassmorphism Effect */
+        .glass-panel { 
+            background: rgba(30, 41, 59, 0.5); 
+            backdrop-filter: blur(16px); 
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Hatched pattern for past slots */
+        .hatched-pattern {
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(255, 255, 255, 0.02),
+                rgba(255, 255, 255, 0.02) 10px,
+                rgba(0, 0, 0, 0.15) 10px,
+                rgba(0, 0, 0, 0.15) 20px
+            );
+        }
+
+        /* Spring Pop Animation for Selected Slots */
+        @keyframes popBounce {
+            0% { transform: scale(1); }
+            35% { transform: scale(0.92); }
+            70% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .slot-selected-active {
+            background-color: rgba(57, 255, 20, 0.2) !important;
+            border-color: #39FF14 !important;
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.5) !important;
+            animation: popBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+        }
+
+        /* Staggered Fade In Up Animation */
+        @keyframes fadeInUpStagger {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .stagger-item {
+            opacity: 0; 
+            animation: fadeInUpStagger 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 51, 102, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(255, 51, 102, 0.9); }
+        }
+        
+        .pulse-badge { animation: pulse-glow 2s infinite; }
+
+        /* Slot Card Standard Transitions */
+        .slot-card { transition: border-color 0.3s, background-color 0.3s, transform 0.3s, box-shadow 0.3s; }
+        .slot-card:not(.disabled):not(.slot-selected-active):hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px -5px rgba(57, 255, 20, 0.2);
+            border-color: rgba(57, 255, 20, 0.5);
+        }
+
+        /* View Container Transition */
+        .view-container-fade {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        /* Scroll Hint Animation */
+        @keyframes bounceHorizontal {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(-8px); }
+        }
+        .scroll-hint-icon {
+            animation: bounceHorizontal 1.5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="text-white min-h-screen flex flex-col relative overflow-x-hidden selection:bg-neon-green selection:text-slate-900">
+
+    <!-- Minimalist Particles Background -->
+    <canvas id="particles-bg"></canvas>
+
+    <!-- Header / Navbar -->
+    <nav class="px-4 py-3 md:px-6 md:py-4 glass-panel sticky top-0 z-[120] flex justify-between items-center shadow-lg transition-all duration-300 border-b border-white/5">
+        
+        <!-- Logo -->
+        <a href="customer_home_v10.html" title="بازگشت به صفحه اصلی" class="flex items-center gap-2 cursor-pointer transition-transform hover:scale-105 shrink-0">
+            <i class="fa-solid fa-bolt text-neon-blue text-2xl drop-shadow-[0_0_8px_rgba(15,240,252,0.6)]"></i>
+            <h1 class="text-2xl md:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-l from-neon-green to-yellow-300">
+                اسپورت تایم
+            </h1>
+        </a>
+
+        <!-- Links (Desktop) -->
+        <ul class="hidden lg:flex space-x-8 space-x-reverse text-sm font-bold text-gray-300 mr-8">
+            <li class="hover:text-neon-green transition-colors cursor-pointer"><a href="customer_home_v10.html">خانه</a></li>
+            <li class="hover:text-neon-green transition-colors cursor-pointer text-white">سالن‌ها و زمین‌ها</li>
+            <li class="hover:text-neon-green transition-colors cursor-pointer">باشگاه مشتریان</li>
+            <li class="hover:text-neon-green transition-colors cursor-pointer">درباره ما</li>
+        </ul>
+
+        <!-- Profile Section -->
+        <div class="relative shrink-0 mr-auto lg:mr-0 flex justify-between items-center" id="user-dropdown-wrapper">
+            <div class="flex items-center gap-3 cursor-pointer hover:bg-slate-800/50 p-1.5 md:p-2 rounded-2xl transition border border-transparent hover:border-slate-700" id="profile-toggle-btn">
+                <div class="text-left hidden sm:block">
+                    <div class="text-sm font-bold text-white">علی حسینی</div>
+                    <div class="text-[11px] text-gray-400 font-normal mt-0.5">مشتری</div>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-slate-700 to-slate-900 border-2 border-neon-blue flex items-center justify-center text-neon-blue shadow-[0_0_10px_rgba(15,240,252,0.2)] shrink-0 overflow-hidden">
+                    <img src="https://placehold.co/100x100/1e293b/0FF0FC?text=User" alt="آواتار" class="w-full h-full object-cover">
+                </div>
+            </div>
+            
+            <!-- Profile Dropdown -->
+            <div id="profile-dropdown" class="absolute left-0 top-full mt-2 w-48 glass-panel rounded-2xl border border-slate-700 shadow-2xl hidden flex-col overflow-hidden origin-top-left z-[130] transition-opacity duration-200 opacity-0 bg-slate-900/90">
+                <button class="flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-slate-800 transition w-full text-right group border-b border-slate-800/50">
+                    <i class="fa-solid fa-wallet text-neon-green group-hover:scale-110 transition-transform w-5 text-center"></i> کیف پول من
+                </button>
+                <button class="flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-slate-800 transition w-full text-right group">
+                    <i class="fa-solid fa-clock-rotate-left text-neon-blue group-hover:scale-110 transition-transform w-5 text-center"></i> تاریخچه رزروها
+                </button>
+                <div class="border-t border-slate-800 my-1"></div>
+                <button class="flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition w-full text-right group">
+                    <i class="fa-solid fa-arrow-right-from-bracket group-hover:-translate-x-1 transition-transform w-5 text-center"></i> خروج
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 py-6 space-y-8 relative z-10 pb-32">
+        
+        <!-- Breadcrumb -->
+        <nav class="flex items-center gap-2 text-sm text-gray-400 glass-panel px-4 py-2 rounded-xl w-fit">
+            <a href="customer_home_v10.html" class="hover:text-white transition-colors">خانه</a>
+            <i class="fa-solid fa-chevron-left text-[10px]"></i>
+            <span class="hover:text-white transition-colors cursor-pointer">سالن‌های فوتسال</span>
+            <i class="fa-solid fa-chevron-left text-[10px]"></i>
+            <span class="text-neon-blue font-bold cursor-default">سالن فوتسال المپیک</span>
+        </nav>
+
+        <!-- Top Section: Details & Gallery -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Right: Details -->
+            <div class="lg:col-span-7 glass-panel rounded-3xl p-6 md:p-8 flex flex-col justify-between relative bg-slate-900/40">
+                <div>
+                    <div class="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-4">
+                        <h2 class="text-3xl md:text-4xl font-black text-white drop-shadow-lg">سالن فوتسال المپیک (شعبه مرکزی)</h2>
+                        <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-xl shrink-0">
+                            <i class="fa-solid fa-star text-yellow-400 drop-shadow"></i>
+                            <span class="font-bold text-lg">۴.۸</span>
+                            <span class="text-xs text-gray-400">(۱۲۴ نظر)</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 leading-relaxed mb-6 text-justify">
+                        یکی از مجهزترین و استانداردترین سالن‌های فوتسال تهران با کفپوش پارکت درجه یک اروپایی، سیستم تهویه مطبوع پیشرفته و نورپردازی حرفه‌ای بدون ایجاد خیرگی. مناسب برای مسابقات رسمی و تمرینات تیم‌های حرفه‌ای.
+                    </p>
+                    <div class="flex items-start gap-3 text-gray-400 text-sm mb-8 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+                        <i class="fa-solid fa-location-dot mt-1 text-neon-blue"></i>
+                        <span class="leading-relaxed">تهران، سعادت‌آباد، بالاتر از میدان کاج، خیابان عبقری، مجموعه ورزشی المپیک، درب شرقی</span>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-400 mb-4 border-b border-slate-700 pb-2">امکانات سالن</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 px-4 py-2 rounded-xl text-sm font-bold text-gray-200">
+                            <i class="fa-solid fa-car text-neon-blue"></i> پارکینگ اختصاصی
+                        </div>
+                        <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 px-4 py-2 rounded-xl text-sm font-bold text-gray-200">
+                            <i class="fa-solid fa-shower text-neon-blue"></i> دوش آب گرم
+                        </div>
+                        <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 px-4 py-2 rounded-xl text-sm font-bold text-gray-200">
+                            <i class="fa-solid fa-shirt text-neon-blue"></i> رختکن مجزا
+                        </div>
+                        <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 px-4 py-2 rounded-xl text-sm font-bold text-gray-200">
+                            <i class="fa-solid fa-fan text-neon-blue"></i> تهویه قدرتمند
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Left: Gallery -->
+            <div class="lg:col-span-5 flex flex-col gap-4">
+                <div class="glass-panel rounded-3xl overflow-hidden h-64 md:h-80 relative group border border-slate-700">
+                    <img src="https://placehold.co/800x600/0f172a/0FF0FC?text=Futsal+Court" alt="Main Gym Area" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                    <div class="absolute top-4 right-4 bg-[#ff3366] text-white font-black text-xs px-3 py-1.5 rounded-lg pulse-badge shadow-lg flex items-center gap-2">
+                        <i class="fa-solid fa-fire"></i> پرطرفدار
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-60"></div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="glass-panel rounded-2xl overflow-hidden h-20 md:h-24 relative border border-slate-700 hover:border-neon-blue cursor-pointer transition-colors">
+                        <img src="https://placehold.co/300x200/0f172a/39FF14?text=Locker+Room" class="w-full h-full object-cover">
+                    </div>
+                    <div class="glass-panel rounded-2xl overflow-hidden h-20 md:h-24 relative border border-slate-700 hover:border-neon-blue cursor-pointer transition-colors">
+                        <img src="https://placehold.co/300x200/0f172a/39FF14?text=Shower" class="w-full h-full object-cover">
+                    </div>
+                    <div class="glass-panel rounded-2xl overflow-hidden h-20 md:h-24 relative border border-slate-700 hover:border-neon-blue cursor-pointer transition-colors group">
+                        <img src="https://placehold.co/300x200/0f172a/39FF14?text=Cafe" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity">
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span class="text-white font-bold text-xs bg-slate-900/80 px-2 py-1 rounded-md">+۵ عکس</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Booking Section -->
+        <section class="glass-panel rounded-3xl p-6 md:p-8 border border-slate-700 bg-slate-900/40 mt-8 shadow-2xl relative overflow-hidden">
+            
+            <!-- Header & Tabs -->
+            <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-6 mb-8 border-b border-slate-700 pb-6">
+                <div>
+                    <h3 class="text-2xl font-black text-white flex items-center gap-3 mb-2">
+                        <i class="fa-regular fa-calendar-check text-neon-green"></i> تقویم رزرو سانس‌ها
+                    </h3>
+                    <p class="text-sm text-gray-400">سانس مورد نظر خود (مدت: ۱.۵ ساعت) را از جدول زیر انتخاب کنید.</p>
+                </div>
+
+                <div class="flex bg-slate-800 p-1.5 rounded-2xl border border-slate-700 w-full md:w-auto shrink-0 relative">
+                    <button onclick="switchTab('daily')" id="tab-btn-daily" class="tab-btn transition-all duration-400 active flex-1 md:flex-none px-6 py-2.5 rounded-xl text-sm font-bold text-slate-900 bg-neon-blue shadow-[0_0_10px_rgba(15,240,252,0.4)]">نمایش روزانه</button>
+                    <button onclick="switchTab('weekly')" id="tab-btn-weekly" class="tab-btn transition-all duration-400 flex-1 md:flex-none px-6 py-2.5 rounded-xl text-sm font-bold text-gray-400 bg-transparent hover:text-white">نمایش هفتگی</button>
+                </div>
+            </div>
+
+            <!-- Legends -->
+            <div class="flex flex-wrap gap-4 mb-6 text-xs text-gray-400 font-bold bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 w-fit">
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-slate-800 border border-slate-600"></span> آزاد</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-slate-800 border border-neon-green shadow-[0_0_5px_rgba(57,255,20,0.5)]"></span> تخفیف‌دار</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-neon-green/20 border border-neon-green shadow-[0_0_5px_rgba(57,255,20,0.3)]"></span> انتخاب شده</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-red-900/40 border border-red-500/50"></span> رزرو شده</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-slate-800/30 border border-slate-700 opacity-60"></span> تعطیل / ناموجود</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded border border-slate-600 hatched-pattern"></span> زمان گذشته</div>
+            </div>
+
+            <!-- TAB 1: Daily View Container -->
+            <div id="daily-view-container" style="display: block; opacity: 1;" class="view-container-fade">
+                <div class="flex justify-between items-center mb-6 gap-4">
+                    <div class="flex overflow-x-auto gap-3 hide-scroll pb-2 flex-grow" id="daily-dates-container">
+                        <!-- JS Injected Daily Dates -->
+                    </div>
+                    <div class="flex shrink-0 gap-2 border-r border-slate-700 pr-4 pl-1">
+                        <button onclick="changeWeekOffset(0)" id="daily-btn-prev" class="hidden flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-neon-blue/10 text-neon-blue border border-neon-blue/30 hover:bg-neon-blue hover:text-slate-900 transition-all text-xs font-bold shadow-inner">
+                            <i class="fa-solid fa-rotate-left"></i> امروز
+                        </button>
+                        <button onclick="changeWeekOffset(1)" id="daily-btn-next" class="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-800 text-white border border-slate-700 hover:border-neon-blue transition-all text-xs font-bold shadow-inner">
+                            هفته آینده <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-8 transition-all duration-300" id="daily-slots-container">
+                    <!-- JS Injected Daily Categories & Slots -->
+                </div>
+            </div>
+
+            <!-- TAB 2: Weekly View Container -->
+            <div id="weekly-view-container" style="display: none; opacity: 0;" class="view-container-fade">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
+                    <h4 class="text-lg font-bold text-white flex items-center gap-2" id="weekly-title">
+                        <i class="fa-regular fa-calendar-days text-neon-blue"></i> هفته جاری
+                    </h4>
+                    <div class="flex gap-2">
+                        <button onclick="changeWeekOffset(0)" id="weekly-btn-prev" class="hidden flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-neon-blue/10 text-neon-blue border border-neon-blue/30 hover:bg-neon-blue hover:text-slate-900 transition-all text-xs font-bold shadow-inner">
+                            <i class="fa-solid fa-rotate-left"></i> امروز
+                        </button>
+                        <button onclick="changeWeekOffset(1)" id="weekly-btn-next" class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 text-white border border-slate-700 hover:border-neon-blue transition-all text-xs font-bold shadow-inner">
+                            هفته آینده <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- WEEKLY WRAPPER WITH FADE BLUR OVERLAYS & SCROLL HINT -->
+                <div class="relative">
+                    <!-- Scroll Hint Banner -->
+                    <div class="absolute -top-3 left-4 z-20 bg-slate-800/90 border border-slate-700 px-3 py-1 rounded-full text-[11px] text-neon-blue flex items-center gap-2 shadow-lg pointer-events-none">
+                        <i class="fa-solid fa-hand-pointer scroll-hint-icon"></i> برای دیدن سایر روزها بکشید
+                    </div>
+
+                    <!-- Right FADE OVERLAY -->
+                    <div id="fade-right" class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-slate-900 to-transparent pointer-events-none z-10 rounded-r-2xl opacity-0 transition-opacity duration-300"></div>
+                    
+                    <!-- Left FADE OVERLAY -->
+                    <div id="fade-left" class="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-slate-900 to-transparent pointer-events-none z-10 rounded-l-2xl transition-opacity duration-300"></div>
+                    
+                    <div class="overflow-x-auto hide-scroll pb-6 border border-slate-700/50 rounded-2xl p-4 bg-slate-900/50 shadow-inner" id="weekly-scroll-area" onscroll="handleWeeklyScroll()">
+                        <div class="flex gap-4 min-w-max" id="weekly-grid-container">
+                            <!-- JS Injected Weekly Columns -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Sticky Booking Bar -->
+    <div id="sticky-booking-bar" class="fixed bottom-0 left-0 w-full glass-panel border-t border-white/10 z-[100] transform translate-y-full transition-transform duration-300 bg-slate-900/95 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+            <div class="flex flex-col">
+                <span class="text-sm text-gray-400 font-medium mb-1">
+                    شما <span id="selected-count" class="text-white font-bold bg-slate-800 px-2 rounded border border-slate-700">۰</span> سانس انتخاب کرده‌اید
+                </span>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-xs text-gray-400">مبلغ کل:</span>
+                    <span id="total-price" class="text-2xl md:text-3xl font-black text-neon-green tracking-tight drop-shadow-[0_0_8px_rgba(57,255,20,0.3)]">۰</span>
+                    <span class="text-sm text-white">تومان</span>
+                </div>
+            </div>
+
+            <button id="submit-booking-btn" disabled class="bg-slate-800 text-gray-500 border border-slate-700 font-bold text-lg px-8 py-3.5 rounded-2xl transition-all duration-300 cursor-not-allowed flex items-center gap-2 w-full max-w-[200px] justify-center md:max-w-xs shadow-lg">
+                تایید و پرداخت <i class="fa-solid fa-chevron-left"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Full Footer -->
+    <footer class="bg-slate-950/90 border-t border-white/5 z-20 backdrop-blur-md relative mt-auto">
+        <div class="max-w-7xl mx-auto px-4 pt-12 pb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-6 mb-10">
+                <div>
+                    <h4 class="text-white font-black mb-5 text-lg drop-shadow">همراه ما باشید</h4>
+                    <p class="text-sm text-gray-400 mb-4 leading-relaxed">ما را در شبکه‌های اجتماعی دنبال کنید تا از جدیدترین تخفیف‌ها مطلع شوید.</p>
+                    <div class="flex gap-4 items-center">
+                        <a href="#" class="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-gray-400 hover:text-neon-blue hover:border-neon-blue border border-slate-800 transition-all text-xl"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-gray-400 hover:text-neon-green hover:border-neon-green border border-slate-800 transition-all text-xl"><i class="fa-solid fa-paper-plane"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-gray-400 hover:text-neon-blue hover:border-neon-blue border border-slate-800 transition-all text-xl"><i class="fa-brands fa-telegram"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-gray-400 hover:text-neon-green hover:border-neon-green border border-slate-800 transition-all text-xl"><i class="fa-solid fa-comment-dots"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-white font-black mb-5 text-lg drop-shadow">مجوزها</h4>
+                    <div class="bg-slate-900 w-24 h-24 rounded-2xl flex items-center justify-center border border-slate-800 hover:border-neon-blue transition-colors cursor-pointer shadow-inner">
+                        <img src="https://placehold.co/80x80/0f172a/0FF0FC?text=e-Namad" alt="اینماد" class="rounded-xl w-20 h-20 object-cover opacity-80 hover:opacity-100 transition-opacity">
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-white font-black mb-5 text-lg drop-shadow">ورزش‌های پرطرفدار</h4>
+                    <ul class="space-y-3 text-sm text-gray-400 font-medium">
+                        <li><a href="#" class="hover:text-neon-green hover:translate-x-[-5px] transition-all inline-block"><i class="fa-solid fa-futbol text-xs ml-1 opacity-70"></i> سالن فوتسال</a></li>
+                        <li><a href="#" class="hover:text-neon-green hover:translate-x-[-5px] transition-all inline-block"><i class="fa-solid fa-dumbbell text-xs ml-1 opacity-70"></i> باشگاه بدنسازی</a></li>
+                        <li><a href="#" class="hover:text-neon-green hover:translate-x-[-5px] transition-all inline-block"><i class="fa-solid fa-table-tennis-paddle-ball text-xs ml-1 opacity-70"></i> زمین تنیس</a></li>
+                        <li><a href="#" class="hover:text-neon-green hover:translate-x-[-5px] transition-all inline-block"><i class="fa-solid fa-volleyball text-xs ml-1 opacity-70"></i> سالن والیبال</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-black mb-5 text-lg drop-shadow">لینک‌های مفید</h4>
+                    <ul class="space-y-3 text-sm text-gray-400 font-medium">
+                        <li><a href="#" class="hover:text-neon-blue hover:translate-x-[-5px] transition-all inline-block">ارتباط با ما</a></li>
+                        <li><a href="#" class="hover:text-neon-blue hover:translate-x-[-5px] transition-all inline-block">قوانین و مقررات</a></li>
+                        <li><a href="#" class="hover:text-neon-blue hover:translate-x-[-5px] transition-all inline-block">سوالات متداول</a></li>
+                        <li><a href="#" class="hover:text-neon-blue hover:translate-x-[-5px] transition-all inline-block">حریم خصوصی</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-slate-800 pt-6 mt-4 text-center">
+                <p class="text-[11px] sm:text-xs text-gray-500 leading-relaxed">
+                    تمام حقوق مادی و معنوی این سایت متعلق به اسپورت تایم می باشد. استفاده از سایت در صورت پذیرش موافقت نامه کاربری امکان‌پذیر است.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        const formatPrice = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        const toFaDigit = (str) => String(str).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+
+        // Particles Configuration
+        function setupParticles() {
+            const canvas = document.getElementById('particles-bg');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            function init() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                particles = [];
+                const count = Math.floor((canvas.width * canvas.height) / 8000); 
+                for (let i = 0; i < count; i++) {
+                    particles.push({
+                        x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                        r: Math.random() * 1.5 + 1,
+                        vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+                        c: Math.random() > 0.5 ? 'rgba(57, 255, 20, 0.3)' : 'rgba(15, 240, 252, 0.2)'
+                    });
+                }
+            }
+            function anim() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
+                    if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                    ctx.fillStyle = p.c; ctx.shadowBlur = 4; ctx.shadowColor = p.c; ctx.fill();
+                });
+                requestAnimationFrame(anim);
+            }
+            init(); anim();
+            window.addEventListener('resize', init);
+        }
+
+        // Profile Dropdown
+        document.getElementById('profile-toggle-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const profileDropdown = document.getElementById('profile-dropdown');
+            if (profileDropdown.classList.contains('hidden')) {
+                profileDropdown.classList.remove('hidden');
+                setTimeout(() => profileDropdown.classList.remove('opacity-0'), 10);
+            } else {
+                profileDropdown.classList.add('opacity-0');
+                setTimeout(() => profileDropdown.classList.add('hidden'), 200);
+            }
+        });
+        document.addEventListener('click', (e) => {
+            const profileBtn = document.getElementById('profile-toggle-btn');
+            const profileDropdown = document.getElementById('profile-dropdown');
+            if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.add('opacity-0');
+                setTimeout(() => profileDropdown.classList.add('hidden'), 200);
+            }
+        });
+
+        // Booking Logic State
+        let weekOffset = 0; 
+        let selectedDailyDateId = null; 
+        let selectedSlotsCart = []; // stores { id: globalId, price: number }
+        const basePrice = 650000;
+
+        const slotTemplates = [
+            { id: 1, s: '07:30', e: '09:00', cat: 'morning' }, { id: 2, s: '09:00', e: '10:30', cat: 'morning' },
+            { id: 3, s: '10:30', e: '12:00', cat: 'morning' }, { id: 4, s: '12:00', e: '13:30', cat: 'morning' },
+            { id: 5, s: '13:30', e: '15:00', cat: 'afternoon' }, { id: 6, s: '15:00', e: '16:30', cat: 'afternoon' },
+            { id: 7, s: '16:30', e: '18:00', cat: 'afternoon' }, { id: 8, s: '18:00', e: '19:30', cat: 'afternoon' },
+            { id: 9, s: '19:30', e: '21:00', cat: 'night' }, { id: 10, s: '21:00', e: '22:30', cat: 'night' },
+            { id: 11, s: '22:30', e: '00:00', cat: 'night' }, { id: 12, s: '00:00', e: '01:30', cat: 'night' }
+        ];
+
+        function getDatesForOffset(offset) {
+            const arr = [];
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            
+            const startDay = new Date(today);
+            startDay.setDate(today.getDate() + (offset * 7));
+
+            const faFormatShort = new Intl.DateTimeFormat('fa-IR', { day: 'numeric', month: 'long' });
+            const faFormatDay = new Intl.DateTimeFormat('fa-IR', { weekday: 'long' });
+
+            for(let i=0; i<7; i++) {
+                const d = new Date(startDay);
+                d.setDate(startDay.getDate() + i);
+                
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth()+1).padStart(2,'0');
+                const dd = String(d.getDate()).padStart(2,'0');
+                const isoId = `${yyyy}-${mm}-${dd}`;
+
+                let dayName = faFormatDay.format(d);
+                if (offset === 0 && i === 0) dayName = 'امروز';
+                if (offset === 0 && i === 1) dayName = 'فردا';
+
+                arr.push({ dateObj: d, id: isoId, dayName: dayName, shortDate: faFormatShort.format(d) });
+            }
+            return arr;
+        }
+
+        function isPastTime(dateObj, startTimeStr) {
+            const now = new Date();
+            let [h, m] = startTimeStr.split(':').map(Number);
+            const slotTime = new Date(dateObj);
+            slotTime.setHours(h, m, 0, 0);
+            if (h < 6) slotTime.setDate(slotTime.getDate() + 1); 
+            return slotTime < now;
+        }
+
+        const weekDataCache = {};
+        function getWeekData(offset) {
+            if (weekDataCache[offset]) return weekDataCache[offset];
+            
+            const dates = getDatesForOffset(offset);
+            const weekData = dates.map(day => {
+                const slots = slotTemplates.map(t => {
+                    const globalId = `${day.id}_${t.id}`;
+                    const isPast = isPastTime(day.dateObj, t.s);
+                    
+                    let hash = 0;
+                    for (let i=0; i<globalId.length; i++) hash = ((hash<<5)-hash) + globalId.charCodeAt(i);
+                    const rand = Math.abs(hash % 100);
+
+                    let status = 'available'; let price = basePrice; let discount = null; let reason = '';
+                    if (!isPast) {
+                        if (rand < 22) status = 'full'; 
+                        else if (rand > 85) { status = 'unavailable'; reason = 'تعمیر و نگهداری'; } 
+                        else if (rand > 70 && t.cat === 'afternoon') { status = 'discounted'; discount = price - 150000; }
+                    }
+
+                    return { ...t, globalId, isPast, status, reason, price, discount, startFa: toFaDigit(t.s), endFa: toFaDigit(t.e) };
+                });
+                return { ...day, slots };
+            });
+            weekDataCache[offset] = weekData;
+            return weekData;
+        }
+
+        // Shared HTML Builder for a Slot
+        function getSlotHTML(slot, isWeekly = false, animDelay = 0) {
+            const isSel = selectedSlotsCart.some(s => s.id === slot.globalId);
+            const faTimes = `${slot.startFa} - ${slot.endFa}`;
+            
+            let wrapCls = `slot-card relative flex flex-col p-4 rounded-2xl border transition-all duration-300 stagger-item `;
+            let styleAttr = `style="animation-delay: ${animDelay}s"`;
+            
+            if (isWeekly) wrapCls += ` h-32 justify-between `;
+            if (isSel) wrapCls += 'slot-selected-active ';
+
+            let inner = '';
+
+            if (slot.isPast) {
+                wrapCls += "border-slate-700 hatched-pattern opacity-40 cursor-not-allowed disabled";
+                inner = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-gray-500 tracking-wider text-base" dir="ltr">${faTimes}</span>
+                        <i class="fa-solid fa-clock-rotate-left text-gray-600"></i>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-auto">زمان گذشته</div>`;
+            } 
+            else if (slot.status === 'full') {
+                wrapCls += "bg-red-900/40 border-red-500/50 cursor-not-allowed disabled group";
+                inner = `
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="font-bold text-red-300 tracking-wider line-through text-base" dir="ltr">${faTimes}</span>
+                        <i class="fa-solid fa-ban text-red-400"></i>
+                    </div>
+                    <div class="text-xs bg-red-950/80 px-2 py-1 rounded text-red-300 w-fit mt-auto border border-red-500/30">رزرو شده</div>`;
+            }
+            else if (slot.status === 'unavailable') {
+                wrapCls += "bg-slate-800/30 border-slate-700/50 opacity-60 cursor-not-allowed disabled group";
+                inner = `
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="font-bold text-gray-400 tracking-wider text-base" dir="ltr">${faTimes}</span>
+                        <i class="fa-solid fa-lock text-gray-500"></i>
+                    </div>
+                    <div class="text-xs bg-slate-800 px-2 py-1 rounded text-gray-400 w-fit mt-auto truncate" title="${slot.reason}">${slot.reason}</div>`;
+            } 
+            else {
+                if (!isSel) {
+                    wrapCls += slot.status === 'discounted' ? 'bg-slate-800/80 border-neon-green/50 hover:bg-slate-800 cursor-pointer ' : 'bg-slate-800/80 border-slate-700 hover:bg-slate-800 cursor-pointer ';
+                } else {
+                    wrapCls += 'cursor-pointer ';
+                }
+                
+                const actIcon = isSel ? `<i class="fa-solid fa-circle-check text-neon-green text-xl bg-slate-900 rounded-full shadow-sm"></i>` : `<div class="w-5 h-5 rounded-full border-2 border-slate-600"></div>`;
+                const prc = slot.status === 'discounted' ? slot.discount : slot.price;
+                const topTag = slot.status === 'discounted' ? `<div class="absolute -top-2 -right-2 bg-neon-green text-slate-900 text-[10px] font-black px-2 py-0.5 rounded-lg shadow-lg">%${Math.round(((slot.price-prc)/slot.price)*100)} تخفیف</div>` : '';
+
+                inner = `
+                    ${topTag}
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="font-bold tracking-wider ${isSel?'text-white':'text-gray-200'} text-base" dir="ltr">${faTimes}</span>
+                        <div class="slot-icon scale-90">${actIcon}</div>
+                    </div>
+                    <div class="flex flex-col mt-auto">
+                        ${slot.status==='discounted' ? `<span class="text-gray-500 line-through text-[10px] mb-0.5">${formatPrice(slot.price)}</span>` : ''}
+                        <div class="text-neon-green font-black text-xl tracking-tight">${formatPrice(prc)} <span class="text-xs font-normal text-white">تومان</span></div>
+                    </div>`;
+            }
+
+            const clickAttr = (!slot.isPast && slot.status !== 'full' && slot.status !== 'unavailable') ? `onclick='toggleSlot(this, "${slot.globalId}", ${slot.status === 'discounted' ? slot.discount : slot.price})'` : '';
+            return `<div class="${wrapCls}" data-slot-id="${slot.globalId}" ${clickAttr} ${styleAttr}>${inner}</div>`;
+        }
+
+        // --- Render Daily View ---
+        function generateDailyView() {
+            const dates = getWeekData(weekOffset);
+            if (!selectedDailyDateId || !dates.find(d => d.id === selectedDailyDateId)) {
+                selectedDailyDateId = dates[0].id;
+            }
+
+            const datesContainer = document.getElementById('daily-dates-container');
+            datesContainer.innerHTML = '';
+            dates.forEach(day => {
+                const isSel = day.id === selectedDailyDateId;
+                const cls = isSel ? 'bg-neon-blue text-slate-900 border-neon-blue shadow-[0_0_10px_rgba(15,240,252,0.4)]' : 'bg-slate-800 text-gray-400 border-slate-700 hover:border-neon-blue hover:text-white';
+                datesContainer.innerHTML += `
+                    <button onclick="selectDailyDate('${day.id}')" class="flex flex-col items-center justify-center min-w-[100px] py-2.5 px-4 rounded-2xl border transition-all duration-500 ease-in-out shrink-0 ${cls}">
+                        <span class="font-bold text-sm mb-0.5">${day.dayName}</span>
+                        <span class="text-[11px] ${isSel ? 'text-slate-800' : 'text-gray-500'} transition-colors duration-500">${day.shortDate}</span>
+                    </button>`;
+            });
+
+            renderDailySlots();
+        }
+
+        function renderDailySlots() {
+            const slotsContainer = document.getElementById('daily-slots-container');
+            slotsContainer.innerHTML = '';
+            
+            const dates = getWeekData(weekOffset);
+            const dayData = dates.find(d => d.id === selectedDailyDateId);
+
+            const cats = [
+                { id: 'morning', title: 'صبح تا ظهر', icon: 'fa-sun text-yellow-400' },
+                { id: 'afternoon', title: 'بعد از ظهر و عصر', icon: 'fa-cloud-sun text-orange-400' },
+                { id: 'night', title: 'شب', icon: 'fa-moon text-blue-400' }
+            ];
+
+            let globalSlotIndex = 0;
+            cats.forEach(cat => {
+                const catSlots = dayData.slots.filter(s => s.cat === cat.id);
+                let slotsHtml = catSlots.map(s => {
+                    const delay = globalSlotIndex * 0.05; 
+                    globalSlotIndex++;
+                    return getSlotHTML(s, false, delay);
+                }).join('');
+                
+                slotsContainer.innerHTML += `
+                    <div>
+                        <div class="flex items-center gap-4 mb-5">
+                            <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 shadow-inner">
+                                <i class="fa-solid ${cat.icon} text-sm"></i>
+                            </div>
+                            <h3 class="text-sm font-bold text-gray-300">${cat.title}</h3>
+                            <div class="flex-grow h-px bg-slate-700/50"></div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            ${slotsHtml}
+                        </div>
+                    </div>`;
+            });
+        }
+
+        window.selectDailyDate = function(id) {
+            if (selectedDailyDateId === id) return;
+            
+            const container = document.getElementById('daily-slots-container');
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(-10px)';
+            
+            setTimeout(() => {
+                selectedDailyDateId = id;
+                generateDailyView(); 
+                container.style.transform = 'translateY(0)';
+                container.style.opacity = '1';
+            }, 300);
+        }
+
+        // --- Render Weekly View ---
+        function generateWeeklyView() {
+            const container = document.getElementById('weekly-grid-container');
+            container.innerHTML = '';
+            const dates = getWeekData(weekOffset);
+
+            document.getElementById('weekly-title').innerHTML = weekOffset === 0 ? '<i class="fa-regular fa-calendar-days text-neon-blue"></i> هفته جاری' : '<i class="fa-regular fa-calendar-days text-neon-blue"></i> هفته آینده';
+
+            dates.forEach((day, idx) => {
+                const isToday = weekOffset === 0 && idx === 0;
+                let slotsHtml = day.slots.map((s, slotIdx) => getSlotHTML(s, true, slotIdx * 0.04)).join('');
+                const headBg = isToday ? 'bg-neon-blue text-slate-900 border-transparent shadow-[0_0_10px_rgba(15,240,252,0.3)]' : 'bg-slate-800 border-slate-700 text-white';
+                const badge = isToday ? '<span class="text-[9px] bg-slate-900 text-neon-blue px-2 py-0.5 rounded-md font-bold shadow-inner">امروز</span>' : '';
+
+                container.innerHTML += `
+                    <div class="flex-none w-[180px] flex flex-col gap-3">
+                        <div class="sticky top-0 z-10 ${headBg} border rounded-2xl p-3 flex flex-col items-center text-center justify-center transition-colors min-h-[70px]">
+                            <div class="flex items-center justify-center gap-2 mb-1 w-full">
+                                <span class="font-black text-sm">${day.dayName}</span> ${badge}
+                            </div>
+                            <span class="text-[11px] opacity-80">${day.shortDate}</span>
+                        </div>
+                        <div class="flex flex-col gap-3 pb-2">
+                            ${slotsHtml}
+                        </div>
+                    </div>`;
+            });
+            
+            setTimeout(handleWeeklyScroll, 50);
+        }
+
+        // Cross-fade Tab Switch
+        window.switchTab = function(tab) {
+            const btnDaily = document.getElementById('tab-btn-daily');
+            const btnWeekly = document.getElementById('tab-btn-weekly');
+            const viewDaily = document.getElementById('daily-view-container');
+            const viewWeekly = document.getElementById('weekly-view-container');
+
+            const currentView = tab === 'daily' ? viewWeekly : viewDaily;
+            const targetView = tab === 'daily' ? viewDaily : viewWeekly;
+
+            if (tab === 'daily') {
+                btnDaily.className = "tab-btn transition-all duration-400 active flex-1 md:flex-none px-6 py-2.5 rounded-xl text-sm font-bold text-slate-900 bg-neon-blue shadow-[0_0_10px_rgba(15,240,252,0.4)]";
+                btnWeekly.className = "tab-btn transition-all duration-400 flex-1 md:flex-none px-6 py-2.5 rounded-xl text-sm font-bold text-gray-400 bg-transparent hover:text-white";
+            } else {
+                btnWeekly.className = "tab-btn transition-all duration-400 active flex-1 md:flex-none px-6 py-2.5 rounded-xl text-sm font-bold text-slate-900 bg-neon-blue shadow-[0_0_10px_rgba(15,240,252,0.4)]";
+                btnDaily.className = "tab-btn transition-all duration-400 flex-1 md:flex-none px-6 py-2.5 rounded-xl text-sm font-bold text-gray-400 bg-transparent hover:text-white";
+            }
+            
+            currentView.style.opacity = '0';
+            setTimeout(() => {
+                currentView.style.display = 'none';
+                targetView.style.display = 'block';
+                void targetView.offsetWidth;
+                targetView.style.opacity = '1';
+                
+                if (tab === 'weekly') {
+                    handleWeeklyScroll();
+                }
+            }, 300);
+        };
+
+        window.changeWeekOffset = function(offset) {
+            weekOffset = offset;
+            document.getElementById('daily-btn-prev').classList.toggle('hidden', offset === 0);
+            document.getElementById('daily-btn-next').classList.toggle('hidden', offset === 1);
+            document.getElementById('weekly-btn-prev').classList.toggle('hidden', offset === 0);
+            document.getElementById('weekly-btn-next').classList.toggle('hidden', offset === 1);
+            
+            selectedDailyDateId = null; 
+            
+            const activeContainer = document.getElementById(document.getElementById('daily-view-container').style.display !== 'none' ? 'daily-slots-container' : 'weekly-grid-container');
+            activeContainer.style.opacity = '0';
+            
+            setTimeout(() => {
+                generateDailyView();
+                generateWeeklyView();
+                activeContainer.style.opacity = '1';
+            }, 300);
+        }
+
+        // --- Safe Toggle Logic (No re-render, class-based toggle) ---
+        window.toggleSlot = function(element, globalId, price) {
+            const idx = selectedSlotsCart.findIndex(s => s.id === globalId);
+            
+            if (idx > -1) {
+                selectedSlotsCart.splice(idx, 1);
+            } else {
+                selectedSlotsCart.push({ id: globalId, price: price });
+            }
+            
+            // Sync UI across all views using data attributes without rebuilding HTML
+            const allSlotElements = document.querySelectorAll(`[data-slot-id="${globalId}"]`);
+            
+            allSlotElements.forEach(el => {
+                el.classList.toggle('slot-selected-active');
+                
+                if (el.classList.contains('slot-selected-active')) {
+                    el.classList.remove('bg-slate-800/80', 'hover:bg-slate-800');
+                } else {
+                    el.classList.add('bg-slate-800/80', 'hover:bg-slate-800');
+                }
+                
+                const iconDiv = el.querySelector('.slot-icon');
+                if (iconDiv) {
+                    if (el.classList.contains('slot-selected-active')) {
+                        iconDiv.innerHTML = '<i class="fa-solid fa-circle-check text-neon-green text-xl bg-slate-900 rounded-full shadow-sm"></i>';
+                    } else {
+                        iconDiv.innerHTML = '<div class="w-5 h-5 rounded-full border-2 border-slate-600"></div>';
+                    }
+                }
+            });
+
+            updateStickyBar();
+        }
+
+        function updateStickyBar() {
+            const bar = document.getElementById('sticky-booking-bar');
+            const btn = document.getElementById('submit-booking-btn');
+            
+            if (selectedSlotsCart.length > 0) {
+                bar.classList.remove('translate-y-full');
+                const total = selectedSlotsCart.reduce((sum, s) => sum + s.price, 0);
+                document.getElementById('selected-count').innerText = toFaDigit(selectedSlotsCart.length);
+                document.getElementById('total-price').innerText = formatPrice(total);
+                
+                btn.disabled = false;
+                btn.className = "bg-gradient-to-r from-neon-green to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-slate-900 font-black text-lg px-8 py-3.5 rounded-2xl shadow-[0_0_15px_rgba(57,255,20,0.4)] transition-all duration-300 w-full max-w-[200px] justify-center md:max-w-xs transform hover:-translate-y-1 flex items-center gap-2";
+            } else {
+                bar.classList.add('translate-y-full');
+                btn.disabled = true;
+            }
+        }
+
+        // Dynamic Scroll Logic & Blurs for Weekly View
+        window.handleWeeklyScroll = function() {
+            const el = document.getElementById('weekly-scroll-area');
+            const fadeLeft = document.getElementById('fade-left');
+            const fadeRight = document.getElementById('fade-right');
+            
+            if (!el) return;
+
+            const maxScroll = el.scrollWidth - el.clientWidth;
+            const currentScroll = Math.abs(el.scrollLeft); 
+            
+            if (currentScroll <= 5) {
+                fadeRight.style.opacity = '0';
+            } else {
+                fadeRight.style.opacity = '1';
+            }
+
+            if (currentScroll >= maxScroll - 5) {
+                fadeLeft.style.opacity = '0';
+            } else {
+                fadeLeft.style.opacity = '1';
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setupParticles();
+            generateDailyView();
+            generateWeeklyView();
+            setTimeout(handleWeeklyScroll, 100);
+        });
+    </script>
+</body>
+</html>
