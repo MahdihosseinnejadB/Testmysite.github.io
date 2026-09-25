@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اسپورت تایم - رزرو آنلاین سالن ورزشی</title>
+    
+    <!-- Vazirmatn Font -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
+                            950: '#020617',
+                        },
+                        neon: {
+                            green: '#39FF14',
+                            blue: '#0FF0FC'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Vazirmatn', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { 
+            font-family: 'Vazirmatn', sans-serif; 
+            background-color: #0f172a; /* Zoghali / Dark Slate base */
+            color: #ffffff;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #0FF0FC; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Glassmorphism Effect for General Panels */
+        .glass-panel { 
+            background: rgba(30, 41, 59, 0.4); 
+            backdrop-filter: blur(16px); 
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Gym Cards Specific Glassmorphism & Neon Glow */
+        .gym-card {
+            background: rgba(30, 41, 59, 0.35);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .gym-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px -10px rgba(57, 255, 20, 0.25);
+            border-color: rgba(57, 255, 20, 0.4);
+            background: rgba(30, 41, 59, 0.5);
+        }
+        
+        /* Floating Animation */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating-element {
+            animation: float 4s ease-in-out infinite;
+        }
+        .floating-svg {
+            animation: float 3.5s ease-in-out infinite alternate;
+        }
+
+        /* Soft Pulse for Search Button */
+        @keyframes softPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(57,255,20,0.3); }
+            50% { transform: scale(1.03); box-shadow: 0 0 25px rgba(57,255,20,0.6); }
+        }
+        .btn-pulse {
+            animation: softPulse 2.5s infinite;
+        }
+
+        /* Fade-in-up for Gym Cards */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Checkbox Custom Styling for Time Dropdown */
+        .custom-checkbox input:checked + div {
+            background-color: #39FF14;
+            border-color: #39FF14;
+        }
+        .custom-checkbox input:checked + div svg { display: block; }
+
+        /* SVG Glow Utilities */
+        .svg-glow-green { filter: drop-shadow(0 0 8px rgba(57,255,20,0.5)); }
+        .svg-glow-blue { filter: drop-shadow(0 0 8px rgba(15,240,252,0.5)); }
+        .svg-glow-yellow { filter: drop-shadow(0 0 8px rgba(253,224,71,0.5)); }
+    </style>
+</head>
+<body class="text-white min-h-screen relative overflow-x-hidden selection:bg-neon-green selection:text-slate-900 flex flex-col">
+
+    <!-- Minimalist Particles Background -->
+    <canvas id="particles-bg" class="fixed top-0 left-0 w-full h-full z-[-1] pointer-events-none"></canvas>
+
+    <!-- Navbar -->
+    <nav class="px-4 py-3 md:px-6 md:py-4 glass-panel sticky top-0 z-[120] flex justify-between items-center shadow-lg transition-all duration-300 border-b border-white/5">
+        
+        <!-- Logo -->
+        <div onclick="resetAllFilters()" title="بازگشت به حالت اولیه" class="flex items-center gap-2 cursor-pointer transition-transform hover:scale-105 shrink-0">
+            <i class="fa-solid fa-bolt text-neon-blue text-2xl drop-shadow-[0_0_8px_rgba(15,240,252,0.6)]"></i>
+            <h1 class="text-2xl md:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-l from-neon-green to-yellow-300">
+                اسپورت تایم
+            </h1>
+        </div>
+
+        <!-- Links (Desktop) -->
+        <ul class="hidden lg:flex space-x-8 space-x-reverse text-sm font-bold text-gray-300 mr-8">
+            <li class="hover:text-neon-green transition-colors cursor-pointer text-white">خانه</li>
+            <li class="hover:text-neon-green transition-colors cursor-pointer">سالن‌ها و زمین‌ها</li>
+            <li class="hover:text-neon-green transition-colors cursor-pointer">باشگاه مشتریان</li>
+            <li class="hover:text-neon-green transition-colors cursor-pointer">درباره ما</li>
+        </ul>
+
+        <!-- Profile Section -->
+        <div class="relative shrink-0 mr-auto lg:mr-0 flex justify-between items-center" id="user-dropdown-wrapper">
+            <div class="flex items-center gap-3 cursor-pointer hover:bg-slate-800/50 p-1.5 md:p-2 rounded-2xl transition border border-transparent hover:border-slate-700" id="profile-toggle-btn">
+                <div class="text-left hidden sm:block">
+                    <div class="text-sm font-bold text-white">علی حسینی</div>
+                    <div class="text-[11px] text-gray-400 font-normal mt-0.5">مشتری</div>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-slate-700 to-slate-900 border-2 border-neon-blue flex items-center justify-center text-neon-blue shadow-[0_0_10px_rgba(15,240,252,0.2)] shrink-0 overflow-hidden">
+                    <img src="https://placehold.co/100x100/1e293b/0FF0FC?text=User" alt="آواتار" class="w-full h-full object-cover">
+                </div>
+            </div>
+            
+            <!-- Profile Dropdown -->
+            <div id="profile-dropdown" class="absolute left-0 top-full mt-2 w-48 glass-panel rounded-2xl border border-slate-700 shadow-2xl hidden flex-col overflow-hidden origin-top-left z-[130] transition-opacity duration-200 opacity-0 bg-slate-900/90">
+                <button class="flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-slate-800 transition w-full text-right group border-b border-slate-800/50">
+                    <i class="fa-solid fa-wallet text-neon-green group-hover:scale-110 transition-transform w-5 text-center"></i> کیف پول من
+                </button>
+                <button class="flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-slate-800 transition w-full text-right group">
+                    <i class="fa-solid fa-clock-rotate-left text-neon-blue group-hover:scale-110 transition-transform w-5 text-center"></i> تاریخچه رزروها
+                </button>
+                <div class="border-t border-slate-800 my-1"></div>
+                <button class="flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition w-full text-right group">
+                    <i class="fa-solid fa-arrow-right-from-bracket group-hover:-translate-x-1 transition-transform w-5 text-center"></i> خروج
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="flex flex-col items-center justify-center pt-12 pb-8 text-center px-4 relative z-[80]">
+
+        <h2 class="text-4xl md:text-6xl font-extrabold mb-4 md:mb-6 leading-tight drop-shadow-2xl">
+            زمانت رو برای <span class="text-neon-green">ورزش</span> تنظیم کن!
+        </h2>
+        <p class="text-lg md:text-xl mb-10 text-gray-300 max-w-2xl leading-relaxed">
+            سریع‌ترین راه برای پیدا کردن و رزرو آنلاین سالن‌های ورزشی، زمین چمن و استخر با بهترین قیمت.
+        </p>
+        
+        <!-- Search Box -->
+        <div class="glass-panel p-4 md:p-6 rounded-3xl shadow-2xl w-full max-w-6xl flex flex-col lg:flex-row gap-3 md:gap-4 items-center transform hover:shadow-neon-green/5 transition-all duration-500 bg-slate-900/60 relative z-[90]">
+            
+            <!-- 1. Text Search -->
+            <div class="w-full lg:flex-grow relative">
+                <i class="fa-solid fa-search absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-lg"></i>
+                <input type="text" id="search-input" placeholder="نام سالن یا امکانات..." class="w-full bg-slate-800/80 text-white rounded-2xl px-6 py-4 pr-12 outline-none border border-slate-700 hover:border-slate-600 focus:border-neon-blue transition-all placeholder-gray-500 shadow-inner text-sm md:text-base relative z-[95]">
+            </div>
+
+            <!-- 2. Time Select Dropdown -->
+            <div class="w-full lg:w-1/4 relative shrink-0">
+                <button id="time-toggle-btn" class="w-full bg-slate-800/80 text-white rounded-2xl px-5 py-4 outline-none border border-slate-700 hover:border-neon-green focus:border-neon-green transition-all flex justify-between items-center shadow-inner relative text-sm md:text-base z-[95]">
+                    <div class="flex items-center gap-2 pointer-events-none">
+                        <i class="fa-regular fa-clock text-neon-green text-lg"></i>
+                        <span id="time-filter-label" class="text-gray-300">بازه زمانی</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-gray-500 text-xs pointer-events-none"></i>
+                    <!-- Badge -->
+                    <span id="time-badge" class="absolute -top-2 -left-2 bg-neon-green text-slate-900 text-[11px] font-black w-6 h-6 flex items-center justify-center rounded-full hidden shadow-lg pointer-events-none">0</span>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div id="time-dropdown" class="absolute right-0 top-full mt-2 w-full glass-panel bg-slate-900/95 border border-slate-700 rounded-2xl shadow-2xl hidden flex-col overflow-hidden origin-top z-[100]">
+                    <div class="p-3 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
+                        <span class="text-xs text-white font-bold">بازه مورد نظر (میتوانید چند مورد انتخاب کنید)</span>
+                        <button id="clear-times-btn" class="text-xs text-red-400 hover:text-red-300 transition-colors hidden" onclick="clearSelectedTimes(event)">لغو همه</button>
+                    </div>
+                    <div class="max-h-60 overflow-y-auto hide-scroll p-2 flex flex-col gap-1" id="time-slots-container">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Jalali Date Select Dropdown -->
+            <div class="w-full lg:w-1/4 relative shrink-0">
+                <button id="date-toggle-btn" class="w-full bg-slate-800/80 text-white rounded-2xl px-5 py-4 outline-none border border-slate-700 hover:border-slate-600 focus:border-neon-blue transition-all flex justify-between items-center shadow-inner relative text-sm md:text-base z-[95]">
+                    <div class="flex items-center gap-2 pointer-events-none">
+                        <i class="fa-regular fa-calendar text-neon-blue text-lg"></i>
+                        <!-- Default text changed to انتخاب تاریخ -->
+                        <span id="date-filter-label" class="text-gray-300 whitespace-nowrap overflow-hidden text-ellipsis w-32 text-right">انتخاب تاریخ</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-gray-500 text-xs pointer-events-none"></i>
+                </button>
+
+                <!-- Date Dropdown Menu -->
+                <div id="date-dropdown" class="absolute right-0 top-full mt-2 w-full glass-panel bg-slate-900/95 border border-slate-700 rounded-2xl shadow-2xl hidden flex-col overflow-hidden origin-top z-[100]">
+                    <div class="max-h-60 overflow-y-auto hide-scroll p-2 flex flex-col gap-1" id="date-slots-container">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Search Button -->
+            <button onclick="updateDisplay()" class="btn-pulse bg-gradient-to-r from-neon-green to-emerald-600 hover:from-[#2ce60d] hover:to-emerald-500 text-slate-900 font-black text-lg px-8 py-4 rounded-2xl transition-all duration-300 w-full lg:w-auto shrink-0 flex justify-center items-center gap-2 relative z-[95]">
+                جستجو
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 w-full max-w-6xl relative z-[40]">
+            <!-- Feature 1 -->
+            <div class="glass-panel p-6 rounded-3xl hover:-translate-y-2 hover:shadow-[0_10px_30px_-10px_rgba(15,240,252,0.3)] hover:border-neon-blue/30 transition-all duration-300 flex flex-col items-center text-center group bg-slate-900/40">
+                <div class="w-20 h-20 mb-4 floating-svg text-neon-blue svg-glow-blue flex items-center justify-center bg-slate-800/50 rounded-full border border-slate-700">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 14h.01M10 10h.01M14 10h.01M14 14h.01"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-black text-white mb-2 group-hover:text-neon-blue transition-colors">جستجوی هوشمند و سریع</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">سالن یا زمین دلخواهت رو به راحتی بر اساس زمان خالی و نوع ورزش پیدا کن.</p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="glass-panel p-6 rounded-3xl hover:-translate-y-2 hover:shadow-[0_10px_30px_-10px_rgba(57,255,20,0.3)] hover:border-neon-green/30 transition-all duration-300 flex flex-col items-center text-center group bg-slate-900/40">
+                <div class="w-20 h-20 mb-4 floating-svg text-neon-green svg-glow-green flex items-center justify-center bg-slate-800/50 rounded-full border border-slate-700" style="animation-delay: 0.5s;">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 16l2 2 4-4"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-black text-white mb-2 group-hover:text-neon-green transition-colors">رزرو آنی و قطعی</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">تنها با چند کلیک، سانس خودت رو آنلاین رزرو کن و خیالت از بابت تایم راحت باشه.</p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="glass-panel p-6 rounded-3xl hover:-translate-y-2 hover:shadow-[0_10px_30px_-10px_rgba(253,224,71,0.3)] hover:border-yellow-400/30 transition-all duration-300 flex flex-col items-center text-center group bg-slate-900/40">
+                <div class="w-20 h-20 mb-4 floating-svg text-yellow-400 svg-glow-yellow flex items-center justify-center bg-slate-800/50 rounded-full border border-slate-700" style="animation-delay: 1s;">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-black text-white mb-2 group-hover:text-yellow-400 transition-colors">تضمین بهترین قیمت</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">با استفاده از تخفیف‌های داینامیک و کیف پول، همیشه ارزان‌تر از همه جا ورزش کن.</p>
+            </div>
+        </div>
+    </section>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 py-6 space-y-6 z-[30] relative">
+        
+        <!-- Sorting and Categories Filter Bar -->
+        <section class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 glass-panel p-3 rounded-2xl relative z-[20]">
+            
+            <!-- Category Chips -->
+            <div class="flex overflow-x-auto w-full md:w-auto gap-2 hide-scroll pb-2 md:pb-0" id="categories-container">
+                <button data-cat="all" class="cat-btn active bg-neon-blue text-slate-900 shadow-[0_0_10px_rgba(15,240,252,0.3)] px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all border border-transparent">همه موارد</button>
+                <button data-cat="سالن" class="cat-btn bg-slate-800 text-gray-300 border border-slate-700 hover:border-neon-blue/50 hover:text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all">سالن چندمنظوره</button>
+                <button data-cat="زمین چمن" class="cat-btn bg-slate-800 text-gray-300 border border-slate-700 hover:border-neon-blue/50 hover:text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all">زمین چمن</button>
+                <button data-cat="تنیس روی میز" class="cat-btn bg-slate-800 text-gray-300 border border-slate-700 hover:border-neon-blue/50 hover:text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all">تنیس روی میز</button>
+                <button data-cat="زمین تنیس" class="cat-btn bg-slate-800 text-gray-300 border border-slate-700 hover:border-neon-blue/50 hover:text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all">زمین تنیس</button>
+                <button data-cat="favorites" class="cat-btn bg-slate-800 text-gray-300 border border-slate-700 hover:border-red-500/50 hover:text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2">
+                    علاقه‌مندی‌ها <i class="fa-solid fa-heart text-red-500"></i>
+                </button>
+            </div>
+
+            <!-- Sorting & Clear Button -->
+            <div class="flex items-center gap-2 w-full md:w-auto shrink-0 flex-wrap justify-end">
+                
+                <!-- Clear Filters Button (Hidden by default) -->
+                <button id="global-clear-filters-btn" onclick="resetAllFilters()" class="hidden bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all items-center gap-2">
+                    <i class="fa-solid fa-xmark"></i> حذف فیلترها
+                </button>
+
+                <!-- Sorting Dropdown -->
+                <div class="flex items-center gap-2 bg-slate-800/80 px-3 py-2 rounded-xl border border-slate-700 shadow-inner">
+                    <i class="fa-solid fa-arrow-down-short-wide text-gray-400"></i>
+                    <label class="text-sm text-gray-400 whitespace-nowrap hidden lg:block">مرتب‌سازی:</label>
+                    <select id="sort-select" class="bg-transparent text-white text-sm font-bold focus:outline-none w-full md:w-36 appearance-none cursor-pointer">
+                        <option value="default" class="bg-slate-900">پیش‌فرض</option>
+                        <option value="cheapest" class="bg-slate-900">ارزان‌ترین</option>
+                        <option value="expensive" class="bg-slate-900">گران‌ترین</option>
+                        <option value="rating" class="bg-slate-900">بالاترین امتیاز</option>
+                        <option value="nearest" class="bg-slate-900">نزدیک‌ترین</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gym Cards Grid -->
+        <section id="gyms-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-10 relative z-[10]">
+            <!-- Populated via JS -->
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-950/90 border-t border-white/5 mt-auto z-20 backdrop-blur-md relative">
+        <div class="max-w-7xl mx-auto px-4 pt-12 pb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-6 mb-10">
+                
+                <!-- Col 1: Social -->
+                <div>
+                    <h4 class="text-white font-black mb-5 text-lg drop-shadow">همراه ما باشید</h4>
+                    <p class="text-sm text-gray-400 mb-4 leading-relaxed">ما را در شبکه‌های اجتماعی دنبال کنید تا از جدیدترین تخفیف‌ها مطلع شوید.</p>
+                    <div class="flex gap-4 items-center">
+                        <a href="#" class="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-gray-400 hover:text-neon-blue hover:border-neon-blue border border-slate-800 transition-all text-xl"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-gray-400 hover:text-neon-green hover:border-neon-green border border-slate-800 transition-all text-xl" title="روبیکا"><i class="fa-solid fa-paper-plane"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-gray-400 hover:text-neon-blue hover:border-neon-blue border border-slate-800 transition-all text-xl"><i class="fa-brands fa-telegram"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-gray-400 hover:text-neon-green hover:border-neon-green border border-slate-800 transition-all text-xl" title="بله"><i class="fa-solid fa-comment-dots"></i></a>
+                    </div>
+                </div>
+
+                <!-- Col 2: Trust Seals -->
+                <div>
+                    <h4 class="text-white font-black mb-5 text-lg drop-shadow">مجوزها</h4>
+                    <div class="bg-slate-900 w-24 h-24 rounded-2xl flex items-center justify-center border border-slate-800 hover:border-neon-blue transition-colors cursor-pointer shadow-inner">
+                        <img src="https://placehold.co/80x80/0f172a/0FF0FC?text=e-Namad" alt="اینماد" class="rounded-xl w-20 h-20 object-cover opacity-80 hover:opacity-100 transition-opacity">
+                    </div>
+                </div>
+
+                <!-- Col 3: Popular -->
+                <div>
+                    <h4 class="text-white font-black mb-5 text-lg drop-shadow">ورزش‌های پرطرفدار</h4>
+                    <ul class="space-y-3 text-sm text-gray-400 font-medium">
+                        <li><a href="#" class="hover:text-neon-green hover:translate-x-[-5px] transition-all inline-block"><i class="fa-solid fa-futbol text-xs ml-1 opacity-70"></i> سالن فوتسال</a></li>
+                        <li><a href="#" class="hover:text-neon-green hover:translate-x-[-5px] transition-all inline-block"><i class="fa-solid fa-dumbbell text-xs ml-1 opacity-70"></i> باشگاه بدنسازی</a></li>
+                        <li><a href="#" class="hover:text-neon-green hover:translate-x-[-5px] transition-all inline-block"><i class="fa-solid fa-table-tennis-paddle-ball text-xs ml-1 opacity-70"></i> زمین تنیس</a></li>
+                        <li><a href="#" class="hover:text-neon-green hover:translate-x-[-5px] transition-all inline-block"><i class="fa-solid fa-volleyball text-xs ml-1 opacity-70"></i> سالن والیبال</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 4: Links -->
+                <div>
+                    <h4 class="text-white font-black mb-5 text-lg drop-shadow">لینک‌های مفید</h4>
+                    <ul class="space-y-3 text-sm text-gray-400 font-medium">
+                        <li><a href="#" class="hover:text-neon-blue hover:translate-x-[-5px] transition-all inline-block">ارتباط با ما</a></li>
+                        <li><a href="#" class="hover:text-neon-blue hover:translate-x-[-5px] transition-all inline-block">قوانین و مقررات</a></li>
+                        <li><a href="#" class="hover:text-neon-blue hover:translate-x-[-5px] transition-all inline-block">سوالات متداول</a></li>
+                        <li><a href="#" class="hover:text-neon-blue hover:translate-x-[-5px] transition-all inline-block">حریم خصوصی</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Copyright -->
+            <div class="border-t border-slate-800 pt-6 mt-4 text-center">
+                <p class="text-[11px] sm:text-xs text-gray-500 leading-relaxed">
+                    تمام حقوق مادی و معنوی این سایت متعلق به اسپورت تایم می باشد. استفاده از سایت در صورت پذیرش موافقت نامه کاربری امکان‌پذیر است.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ==========================================
+        // 1. APP STATE & MOCK DATA
+        // ==========================================
+        const toMins = (h, m) => h * 60 + m;
+        const formatPrice = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+        // Initial state
+        let state = {
+            search: '',
+            category: 'all',
+            sort: 'default',
+            selectedTimeBlocks: [],
+            selectedDate: null // Initial state is null (No date selected)
+        };
+
+        const timeBlocks = [
+            { id: 'morning', label: 'صبح (۰۷:۰۰ تا ۱۲:۰۰)', startMin: toMins(7, 0), endMin: toMins(12, 0) },
+            { id: 'afternoon', label: 'ظهر تا عصر (۱۲:۰۰ تا ۱۸:۰۰)', startMin: toMins(12, 0), endMin: toMins(18, 0) },
+            { id: 'night', label: 'عصر تا شب (۱۸:۰۰ تا ۲۳:۰۰)', startMin: toMins(18, 0), endMin: toMins(23, 0) }
+        ];
+
+        const generateSessionsTypeA = () => {
+            let sessions = [];
+            for (let m = toMins(7, 0); m <= toMins(21, 30); m += 90) {
+                sessions.push({ startMins: m, endMins: m + 90, isFull: Math.random() < 0.4 });
+            }
+            return sessions;
+        };
+
+        const generateSessionsTypeB = () => {
+            let sessions = [];
+            for (let m = toMins(7, 30); m <= toMins(22, 0); m += 90) {
+                sessions.push({ startMins: m, endMins: m + 90, isFull: Math.random() < 0.3 });
+            }
+            return sessions;
+        };
+
+        const generateSessionsTypeC = () => {
+            let sessions = [];
+            for (let m = toMins(8, 0); m <= toMins(22, 30); m += 90) {
+                sessions.push({ startMins: m, endMins: m + 90, isFull: Math.random() < 0.5 });
+            }
+            return sessions;
+        };
+
+        // GYMS DATABASE - Facilities and fomoBadge retained
+        const gymsData = [
+            { id: 1, name: 'مجموعه ورزشی چمن انقلاب', category: 'زمین چمن', minPrice: 650000, location: 'تهران، سئول', distance: 2.5, rating: 4.8, isFavorite: true, image: 'https://placehold.co/600x400/0f172a/39FF14?text=Grass+Field', sessions: generateSessionsTypeA(), 
+              facilities: [{ name: 'پارکینگ', icon: 'car' }, { name: 'بوفه', icon: 'mug-hot' }, { name: 'دوش', icon: 'shower' }], 
+              fomoBadge: '🔥 پرتقاضا' },
+            { id: 2, name: 'سالن چندمنظوره آزادی', category: 'سالن', minPrice: 450000, location: 'تهران، استادیوم آزادی', distance: 15.0, rating: 4.5, isFavorite: false, image: 'https://placehold.co/600x400/0f172a/0FF0FC?text=Indoor+Hall', sessions: generateSessionsTypeC(),
+              facilities: [{ name: 'تهویه', icon: 'fan' }, { name: 'رختکن', icon: 'shirt' }, { name: 'جایگاه تماشاچی', icon: 'users' }],
+              fomoBadge: null },
+            { id: 3, name: 'باشگاه پینگ‌پنگ قهرمانان', category: 'تنیس روی میز', minPrice: 150000, location: 'تهران، شهرک غرب', distance: 1.2, rating: 4.9, isFavorite: false, image: 'https://placehold.co/600x400/0f172a/ffffff?text=Table+Tennis', sessions: generateSessionsTypeB(),
+              facilities: [{ name: 'تهویه', icon: 'fan' }, { name: 'بوفه', icon: 'mug-hot' }],
+              fomoBadge: '⚡ ظرفیت محدود' },
+            { id: 4, name: 'آکادمی تنیس خاکی آپت', category: 'زمین تنیس', minPrice: 800000, location: 'تهران، زعفرانیه', distance: 4.0, rating: 4.9, isFavorite: true, image: 'https://placehold.co/600x400/0f172a/FF3366?text=Tennis+Court', sessions: generateSessionsTypeB(),
+              facilities: [{ name: 'پارکینگ', icon: 'car' }, { name: 'رختکن', icon: 'shirt' }, { name: 'فروشگاه', icon: 'store' }],
+              fomoBadge: null },
+            { id: 5, name: 'زمین چمن مصنوعی پاس', category: 'زمین چمن', minPrice: 300000, location: 'تهران، اکباتان', distance: 8.5, rating: 4.2, isFavorite: false, image: 'https://placehold.co/600x400/0f172a/39FF14?text=Artificial+Grass', sessions: generateSessionsTypeA(),
+              facilities: [{ name: 'نورپردازی', icon: 'lightbulb' }, { name: 'پارکینگ', icon: 'car' }],
+              fomoBadge: '🔥 محبوب' },
+            { id: 6, name: 'سالن فوتسال و والیبال کاج', category: 'سالن', minPrice: 500000, location: 'تهران، سعادت‌آباد', distance: 2.0, rating: 4.7, isFavorite: false, image: 'https://placehold.co/600x400/0f172a/0FF0FC?text=Futsal+Hall', sessions: generateSessionsTypeA(),
+              facilities: [{ name: 'تهویه', icon: 'fan' }, { name: 'دوش', icon: 'shower' }, { name: 'توپ رایگان', icon: 'futbol' }],
+              fomoBadge: null },
+            { id: 7, name: 'سالن تنیس روی میز المپیک', category: 'تنیس روی میز', minPrice: 120000, location: 'تهران، تهرانپارس', distance: 12.0, rating: 4.1, isFavorite: false, image: 'https://placehold.co/600x400/0f172a/ffffff?text=Table+Tennis+Pro', sessions: generateSessionsTypeC(),
+              facilities: [{ name: 'بوفه', icon: 'mug-hot' }, { name: 'پارکینگ', icon: 'car' }],
+              fomoBadge: null },
+            { id: 8, name: 'باشگاه تنیس استقلال', category: 'زمین تنیس', minPrice: 750000, location: 'تهران، ونک', distance: 5.5, rating: 4.6, isFavorite: false, image: 'https://placehold.co/600x400/0f172a/FF3366?text=Tennis+Club', sessions: generateSessionsTypeB(),
+              facilities: [{ name: 'رختکن', icon: 'shirt' }, { name: 'دوش', icon: 'shower' }, { name: 'کافه', icon: 'coffee' }],
+              fomoBadge: '⚡ رو به اتمام' },
+            { id: 9, name: 'استادیوم چمن طبیعی', category: 'زمین چمن', minPrice: 900000, location: 'تهران، شهرری', distance: 18.0, rating: 4.3, isFavorite: false, image: 'https://placehold.co/600x400/0f172a/39FF14?text=Natural+Grass', sessions: generateSessionsTypeC(),
+              facilities: [{ name: 'جایگاه', icon: 'users' }, { name: 'پارکینگ بزرگ', icon: 'car' }],
+              fomoBadge: null },
+            { id: 10, name: 'سالن ورزشی بانوان', category: 'سالن', minPrice: 350000, location: 'تهران، نارمک', distance: 9.5, rating: 4.5, isFavorite: false, image: 'https://placehold.co/600x400/0f172a/0FF0FC?text=Womens+Hall', sessions: generateSessionsTypeA(),
+              facilities: [{ name: 'ویژه بانوان', icon: 'person-dress' }, { name: 'تهویه', icon: 'fan' }, { name: 'رختکن', icon: 'shirt' }],
+              fomoBadge: null },
+        ];
+
+        // ==========================================
+        // 2. DROPDOWNS & DATE HANDLING
+        // ==========================================
+        function setupDropdowns() {
+            const profileBtn = document.getElementById('profile-toggle-btn');
+            const profileDropdown = document.getElementById('profile-dropdown');
+            const timeBtn = document.getElementById('time-toggle-btn');
+            const timeDropdown = document.getElementById('time-dropdown');
+            const dateBtn = document.getElementById('date-toggle-btn');
+            const dateDropdown = document.getElementById('date-dropdown');
+
+            function closeAllExcept(exceptionBtn) {
+                if (exceptionBtn !== profileBtn) {
+                    profileDropdown.classList.add('opacity-0');
+                    setTimeout(() => profileDropdown.classList.add('hidden'), 200);
+                }
+                if (exceptionBtn !== timeBtn) timeDropdown.classList.add('hidden');
+                if (exceptionBtn !== dateBtn) dateDropdown.classList.add('hidden');
+            }
+
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeAllExcept(profileBtn);
+                if (profileDropdown.classList.contains('hidden')) {
+                    profileDropdown.classList.remove('hidden');
+                    setTimeout(() => profileDropdown.classList.remove('opacity-0'), 10);
+                } else {
+                    closeAllExcept(null);
+                }
+            });
+
+            timeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeAllExcept(timeBtn);
+                timeDropdown.classList.toggle('hidden');
+            });
+
+            dateBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeAllExcept(dateBtn);
+                dateDropdown.classList.toggle('hidden');
+            });
+
+            timeDropdown.addEventListener('click', (e) => e.stopPropagation());
+            dateDropdown.addEventListener('click', (e) => e.stopPropagation());
+
+            document.addEventListener('click', (e) => {
+                if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                    closeAllExcept(null);
+                }
+            });
+        }
+
+        function populateDateDropdown() {
+            const container = document.getElementById('date-slots-container');
+            container.innerHTML = '';
+            
+            const today = new Date();
+            const formatter = new Intl.DateTimeFormat('fa-IR', { weekday: 'long', month: 'long', day: 'numeric' });
+            
+            for (let i = 0; i < 7; i++) {
+                const targetDate = new Date(today.getTime() + i * 24 * 60 * 60 * 1000);
+                const parts = formatter.formatToParts(targetDate);
+                
+                const dayName = parts.find(p => p.type === 'weekday')?.value || '';
+                const dayNum = parts.find(p => p.type === 'day')?.value || '';
+                const month = parts.find(p => p.type === 'month')?.value || '';
+                
+                let prefix = '';
+                if (i === 0) prefix = 'امروز، ';
+                else if (i === 1) prefix = 'فردا، ';
+                
+                const fullText = `${prefix}${dayName} ${dayNum} ${month}`;
+                
+                const html = `
+                    <div class="date-option cursor-pointer p-3 rounded-xl border border-transparent hover:bg-slate-800 transition-colors text-sm text-gray-300" 
+                         onclick="selectDate('${fullText}', this)">
+                        ${fullText}
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            }
+        }
+
+        window.selectDate = function(text, el) {
+            const label = document.getElementById('date-filter-label');
+            label.innerText = text;
+            label.classList.remove('text-gray-300');
+            label.classList.add('text-white', 'font-bold');
+            
+            document.getElementById('date-dropdown').classList.add('hidden');
+            
+            document.querySelectorAll('.date-option').forEach(child => {
+                child.className = "date-option cursor-pointer p-3 rounded-xl border border-transparent hover:bg-slate-800 transition-colors text-sm text-gray-300";
+            });
+            el.className = "date-option cursor-pointer p-3 rounded-xl border bg-slate-800 border-neon-blue transition-colors text-sm text-neon-blue font-bold";
+            
+            state.selectedDate = text;
+            updateDisplay(); 
+        }
+
+        // ==========================================
+        // 3. FILTERING & RENDER LOGIC
+        // ==========================================
+
+        function doesGymMatchSelectedBlocks(gym, selectedBlocksArray) {
+            if (selectedBlocksArray.length === 0) return true; 
+            return selectedBlocksArray.some(blockId => {
+                const block = timeBlocks.find(b => b.id === blockId);
+                return gym.sessions.some(session => {
+                    return !session.isFull && session.startMins >= block.startMin && session.startMins < block.endMin;
+                });
+            });
+        }
+
+        function isTimeBlockAvailableGlobally(block) {
+            let relevantGyms = gymsData.filter(g => {
+                const matchSearch = g.name.includes(state.search) || g.location.includes(state.search);
+                const matchCategory = state.category === 'all' || (state.category === 'favorites' ? g.isFavorite : g.category === state.category);
+                return matchSearch && matchCategory;
+            });
+            return relevantGyms.some(gym => {
+                return gym.sessions.some(session => !session.isFull && session.startMins >= block.startMin && session.startMins < block.endMin);
+            });
+        }
+
+        window.resetAllFilters = function() {
+            state.search = '';
+            state.category = 'all';
+            state.sort = 'default';
+            state.selectedTimeBlocks = [];
+            state.selectedDate = null; // Clear date state
+
+            document.getElementById('search-input').value = '';
+            document.getElementById('sort-select').value = 'default';
+            
+            // Reset categories
+            document.querySelectorAll('.cat-btn').forEach(b => {
+                b.className = b.getAttribute('data-cat') === 'favorites' 
+                    ? "cat-btn bg-slate-800 text-gray-300 border border-slate-700 hover:border-red-500/50 hover:text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2"
+                    : "cat-btn bg-slate-800 text-gray-300 border border-slate-700 hover:border-neon-blue/50 hover:text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all";
+            });
+            document.querySelector('[data-cat="all"]').className = "cat-btn active bg-neon-blue text-slate-900 shadow-[0_0_10px_rgba(15,240,252,0.3)] px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all border border-transparent";
+            
+            // Reset date label and unselect options
+            const dateLabel = document.getElementById('date-filter-label');
+            dateLabel.innerText = 'انتخاب تاریخ';
+            dateLabel.classList.remove('text-white', 'font-bold');
+            dateLabel.classList.add('text-gray-300');
+            document.querySelectorAll('.date-option').forEach(child => {
+                child.className = "date-option cursor-pointer p-3 rounded-xl border border-transparent hover:bg-slate-800 transition-colors text-sm text-gray-300";
+            });
+
+            updateDisplay();
+        }
+
+        window.toggleFavorite = function(id, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const gym = gymsData.find(g => g.id === id);
+            if (gym) {
+                gym.isFavorite = !gym.isFavorite;
+                updateDisplay(); 
+            }
+        }
+
+        function renderTimeOptions() {
+            const container = document.getElementById('time-slots-container');
+            container.innerHTML = '';
+
+            timeBlocks.forEach(block => {
+                const isAvailable = isTimeBlockAvailableGlobally(block);
+                const isChecked = state.selectedTimeBlocks.includes(block.id);
+                const disabledClass = !isAvailable ? 'opacity-30 cursor-not-allowed grayscale' : 'cursor-pointer hover:bg-slate-800';
+                
+                const html = `
+                    <label class="flex items-center gap-3 p-3 rounded-xl transition-colors custom-checkbox relative ${disabledClass}">
+                        <input type="checkbox" class="sr-only" value="${block.id}" ${isChecked ? 'checked' : ''} ${!isAvailable ? 'disabled' : ''} onchange="handleTimeSelection(this)">
+                        <div class="w-5 h-5 rounded border border-slate-600 bg-slate-900 flex items-center justify-center transition-colors shrink-0 shadow-inner">
+                            <svg class="w-3 h-3 text-slate-900 hidden pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div class="flex-grow flex justify-between items-center text-sm">
+                            <span class="font-bold text-white">${block.label}</span>
+                            ${!isAvailable ? '<span class="text-[10px] bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-gray-500">تکمیل ظرفیت</span>' : ''}
+                        </div>
+                    </label>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+
+            const badge = document.getElementById('time-badge');
+            const clearBtn = document.getElementById('clear-times-btn');
+            const label = document.getElementById('time-filter-label');
+            
+            if (state.selectedTimeBlocks.length > 0) {
+                badge.innerText = state.selectedTimeBlocks.length;
+                badge.classList.remove('hidden');
+                clearBtn.classList.remove('hidden');
+                label.classList.add('text-neon-green');
+                label.classList.remove('text-gray-300');
+            } else {
+                badge.classList.add('hidden');
+                clearBtn.classList.add('hidden');
+                label.classList.remove('text-neon-green');
+                label.classList.add('text-gray-300');
+            }
+        }
+
+        window.handleTimeSelection = function(checkbox) {
+            const val = checkbox.value;
+            if (checkbox.checked) {
+                state.selectedTimeBlocks.push(val);
+            } else {
+                state.selectedTimeBlocks = state.selectedTimeBlocks.filter(v => v !== val);
+            }
+            updateDisplay();
+        }
+
+        window.clearSelectedTimes = function(e) {
+            if(e) e.stopPropagation();
+            state.selectedTimeBlocks = [];
+            updateDisplay();
+        }
+
+        function renderGymCards(gymsToRender) {
+            const container = document.getElementById('gyms-grid');
+            container.innerHTML = '';
+
+            if (gymsToRender.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full flex flex-col items-center justify-center py-20 glass-panel rounded-3xl border-dashed border-2 border-slate-700/50">
+                        <i class="fa-solid fa-face-frown-open text-6xl text-slate-600 mb-6"></i>
+                        <h3 class="text-xl font-black text-white mb-2">موردی یافت نشد!</h3>
+                        <p class="text-gray-400 text-sm">لطفاً فیلتر زمان، جستجو یا دسته‌بندی را تغییر دهید.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            gymsToRender.forEach((gym, index) => {
+                const delay = index * 0.08;
+                
+                const card = `
+                    <div class="gym-card rounded-3xl overflow-hidden flex flex-col h-full relative group animate-fade-in-up opacity-0" style="animation-delay: ${delay}s">
+                        
+                        <!-- Badge Categories -->
+                        <div class="absolute top-3 right-3 z-[15] bg-slate-900/80 backdrop-blur-md text-neon-blue text-xs font-bold px-3 py-1 rounded-xl border border-neon-blue/30 shadow-lg pointer-events-none">
+                            ${gym.category}
+                        </div>
+                        
+                        <!-- Image & Heart Icon -->
+                        <div class="h-48 relative overflow-hidden bg-slate-800 shrink-0">
+                            <img src="${gym.image}" alt="${gym.name}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-90 pointer-events-none"></div>
+                            
+                            <!-- Favorite Button -->
+                            <button onclick="toggleFavorite(${gym.id}, event)" class="absolute top-3 left-3 z-[25] w-9 h-9 flex items-center justify-center rounded-full bg-slate-900/60 backdrop-blur-md border border-white/10 hover:scale-110 transition-transform shadow-md hover:border-red-500/50">
+                                <i class="fa-${gym.isFavorite ? 'solid' : 'regular'} fa-heart ${gym.isFavorite ? 'text-red-500' : 'text-white'} text-lg drop-shadow"></i>
+                            </button>
+
+                            <!-- Rating -->
+                            <div class="absolute bottom-3 right-4 flex items-center gap-1 text-sm font-bold text-white pointer-events-none">
+                                <i class="fa-solid fa-star text-yellow-400 drop-shadow"></i> ${gym.rating}
+                            </div>
+                            
+                            <!-- FOMO Badge (if exists) -->
+                            ${gym.fomoBadge ? `
+                            <div class="absolute bottom-3 left-3 z-[25] animate-pulse bg-gradient-to-r from-orange-500 to-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg">
+                                ${gym.fomoBadge}
+                            </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Content -->
+                        <div class="p-5 flex flex-col flex-grow relative z-20">
+                            <h3 class="text-xl font-black text-white mb-2 truncate drop-shadow" title="${gym.name}">${gym.name}</h3>
+                            
+                            <!-- Location -->
+                            <div class="flex items-center gap-2 text-gray-400 text-sm mb-3">
+                                <i class="fa-solid fa-location-dot text-neon-blue/80"></i>
+                                <span class="truncate">${gym.location}</span>
+                                ${state.sort === 'nearest' ? `<span class="text-xs bg-slate-800 px-2 py-1 rounded-lg text-white ml-auto border border-slate-700 shadow-inner">${gym.distance} km</span>` : ''}
+                            </div>
+                            
+                            <!-- Facilities Micro-chips -->
+                            <div class="flex flex-wrap gap-1.5 mb-4">
+                                ${gym.facilities.map(f => `
+                                    <span class="bg-slate-800/80 border border-slate-700/50 px-2 py-1 rounded-md text-[10px] text-gray-300 flex items-center gap-1">
+                                        <i class="fa-solid fa-${f.icon} text-neon-blue/70"></i> ${f.name}
+                                    </span>
+                                `).join('')}
+                            </div>
+
+                            <div class="flex-grow"></div>
+                            
+                            <div class="mb-5 pt-4 border-t border-slate-700/50 flex flex-col">
+                                <span class="text-xs text-gray-400 mb-1 font-medium">شروع قیمت سانس‌ها از:</span>
+                                <div class="text-neon-green font-black text-2xl tracking-tight drop-shadow-[0_0_5px_rgba(57,255,20,0.2)]">
+                                    ${formatPrice(gym.minPrice)} <span class="text-xs font-normal text-white drop-shadow-none">تومان</span>
+                                </div>
+                            </div>
+
+                            <a href="hall_details.html" class="block text-center w-full py-3 rounded-xl bg-slate-800 border border-slate-700 text-white font-bold text-sm hover:bg-neon-green hover:text-slate-900 hover:border-neon-green hover:shadow-[0_0_15px_rgba(57,255,20,0.4)] transition-all duration-300">
+                                مشاهده سانس‌ها و رزرو
+                            </a>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', card);
+            });
+        }
+
+        window.updateDisplay = function() {
+            state.search = document.getElementById('search-input').value.trim();
+            state.sort = document.getElementById('sort-select').value;
+
+            // Handle the visibility of Clear Filters button
+            const clearGlobalBtn = document.getElementById('global-clear-filters-btn');
+            const isFilterActive = state.search !== '' || state.category !== 'all' || state.sort !== 'default' || state.selectedTimeBlocks.length > 0 || state.selectedDate !== null;
+            if (isFilterActive) {
+                clearGlobalBtn.classList.remove('hidden');
+                clearGlobalBtn.classList.add('flex');
+            } else {
+                clearGlobalBtn.classList.add('hidden');
+                clearGlobalBtn.classList.remove('flex');
+            }
+
+            let filtered = gymsData;
+
+            if (state.search) {
+                filtered = filtered.filter(g => g.name.includes(state.search) || g.location.includes(state.search));
+            }
+
+            if (state.category === 'favorites') {
+                filtered = filtered.filter(g => g.isFavorite);
+            } else if (state.category !== 'all') {
+                filtered = filtered.filter(g => g.category === state.category);
+            }
+
+            filtered = filtered.filter(g => doesGymMatchSelectedBlocks(g, state.selectedTimeBlocks));
+
+            filtered.sort((a, b) => {
+                if (state.sort === 'default') {
+                    if (a.isFavorite === b.isFavorite) return 0;
+                    return a.isFavorite ? -1 : 1;
+                } else {
+                    switch (state.sort) {
+                        case 'cheapest': return a.minPrice - b.minPrice;
+                        case 'expensive': return b.minPrice - a.minPrice;
+                        case 'rating': return b.rating - a.rating;
+                        case 'nearest': return a.distance - b.distance;
+                        default: return 0;
+                    }
+                }
+            });
+
+            renderGymCards(filtered);
+            renderTimeOptions(); 
+        }
+
+        // Category Chips Listeners
+        document.querySelectorAll('.cat-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.cat-btn').forEach(b => {
+                    if(b.getAttribute('data-cat') === 'favorites') {
+                        b.className = "cat-btn bg-slate-800 text-gray-300 border border-slate-700 hover:border-red-500/50 hover:text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2";
+                    } else {
+                        b.className = "cat-btn bg-slate-800 text-gray-300 border border-slate-700 hover:border-neon-blue/50 hover:text-white px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all";
+                    }
+                });
+                
+                const clickedBtn = e.currentTarget;
+                if(clickedBtn.getAttribute('data-cat') === 'favorites') {
+                    clickedBtn.className = "cat-btn active bg-red-500/20 border-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.2)] px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2";
+                } else {
+                    clickedBtn.className = "cat-btn active bg-neon-blue text-slate-900 shadow-[0_0_10px_rgba(15,240,252,0.3)] px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all border border-transparent";
+                }
+                
+                state.category = clickedBtn.getAttribute('data-cat');
+                updateDisplay();
+            });
+        });
+
+        // ==========================================
+        // 4. ANIMATION PARTICLES
+        // ==========================================
+        function setupParticlesAnimation() {
+            const canvas = document.getElementById('particles-bg');
+            const ctx = canvas.getContext('2d');
+            let w, h;
+            let particles = [];
+
+            function init() {
+                w = canvas.width = window.innerWidth;
+                h = canvas.height = window.innerHeight;
+                particles = [];
+                // Adjust density based on screen size
+                const count = Math.floor((w * h) / 7000); 
+                
+                const colors = [
+                    'rgba(57, 255, 20, 0.4)', 
+                    'rgba(15, 240, 252, 0.3)', 
+                    'rgba(253, 224, 71, 0.3)'
+                ];
+
+                for (let i = 0; i < count; i++) {
+                    particles.push({
+                        x: Math.random() * w,
+                        y: Math.random() * h,
+                        r: Math.random() * 1.5 + 1.5, // INCREASED RADIUS: 1.5px to 3.0px
+                        vx: (Math.random() - 0.5) * 0.25, 
+                        vy: (Math.random() - 0.5) * 0.25,
+                        color: colors[Math.floor(Math.random() * colors.length)]
+                    });
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, w, h);
+                
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    // Soft wrap-around edges
+                    if (p.x < 0) p.x = w;
+                    if (p.x > w) p.x = 0;
+                    if (p.y < 0) p.y = h;
+                    if (p.y > h) p.y = 0;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    
+                    ctx.shadowBlur = 4;
+                    ctx.shadowColor = p.color;
+                    
+                    ctx.fill();
+                    ctx.shadowBlur = 0; 
+                });
+                
+                requestAnimationFrame(animate);
+            }
+
+            init();
+            animate();
+
+            window.addEventListener('resize', init);
+        }
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            setupDropdowns();
+            populateDateDropdown(); // Generates dates but won't select any by default
+            
+            document.getElementById('search-input').addEventListener('input', updateDisplay);
+            document.getElementById('sort-select').addEventListener('change', updateDisplay);
+            
+            updateDisplay();
+            setupParticlesAnimation(); 
+        });
+
+    </script>
+</body>
+</html>
